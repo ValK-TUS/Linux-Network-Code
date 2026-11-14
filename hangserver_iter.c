@@ -8,8 +8,13 @@
  #include <syslog.h>
  #include <signal.h>
  #include <errno.h>
+ #include <stdlib.h>     // rand(), srand(), exit()
+ #include <string.h>     // strlen(), strcmp(), strcpy()
+ #include <unistd.h>     // read(), write(), close(), gethostname()
+ #include <time.h>       // time()
 
- extern time_t time ();
+
+ //extern time_t time ();
 
  int maxlives = 12;
  char *word [] = {
@@ -18,19 +23,26 @@
  # define NUM_OF_WORDS (sizeof (word) / sizeof (word [0]))
  # define MAXLEN 80 /* Maximum size in the world of Any string */
  # define HANGMAN_TCP_PORT 1066
+ 
+ void play_hangman(int in, int out);
 
- main ()
+ int main ()
  {
- 	int sock, fd, client_len;
+ 	int sock, fd;
+ 	socklen_t client_len;
  	struct sockaddr_in server, client;
 
- 	srand ((int) time ((long *) 0)); /* randomize the seed */
+ 	//srand ((int) time ((long *) 0)); /* randomize the seed */
+ 	srand((unsigned int)time(NULL));
 
  	sock = socket (AF_INET, SOCK_STREAM, 0);//0 or IPPROTO_TCP
  	if (sock <0) { //This error checking is the code Stevens wraps in his Socket Function etc
  		perror ("creating stream socket");
  		exit (1);
  	}
+ 	
+ 	memset(&server, 0, sizeof(server));
+
 
  	server.sin_family = AF_INET;
  	server.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -52,11 +64,13 @@
  		play_hangman (fd, fd);
  		close (fd);
  	}
+ 	
+ 	return 0;
  }
 
  /* ---------------- Play_hangman () ---------------------*/
 
- play_hangman (int in, int out)
+ void play_hangman (int in, int out)
  {
  	char * whole_word, part_word [MAXLEN],
  	guess[MAXLEN], outbuf [MAXLEN];
@@ -67,7 +81,8 @@
  	char hostname[MAXLEN];
 
  	gethostname (hostname, MAXLEN);
- 	sprintf(outbuf, "Playing hangman on host% s: \n \n", hostname);
+ 	//sprintf(outbuf, "Playing hangman on host %s: \n \n", hostname);
+ 	snprintf(outbuf, sizeof(outbuf), "Playing hangman on host %s: \n \n", hostname);
  	write(out, outbuf, strlen (outbuf));
 
  	/* Pick a word at random from the list */
@@ -81,7 +96,8 @@
  	
 	part_word[i] = '\0';
 
- 	sprintf (outbuf, "%s %d \n", part_word, lives);
+ 	//sprintf (outbuf, "%s %d \n", part_word, lives);
+ 	snprintf(outbuf, sizeof(outbuf), "%s %d \n", part_word, lives);
  	write (out, outbuf, strlen(outbuf));
 
  	while (game_state == 'I')
@@ -106,7 +122,8 @@
  		game_state = 'L'; /* L ==> User Lost */
  		strcpy (part_word, whole_word); /* User Show the word */
  	}
- 	sprintf (outbuf, "%s %d \n", part_word, lives);
+ 	//sprintf (outbuf, "%s %d \n", part_word, lives);
+ 	snprintf(outbuf, sizeof(outbuf), "%s %d \n", part_word, lives);
  	write (out, outbuf, strlen (outbuf));
  	}
  }
