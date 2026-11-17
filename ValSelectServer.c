@@ -1,6 +1,4 @@
 /* Network server for Hangman game */
-/* File: hangserver.c */
-/* Modern select() server using getaddrinfo() */
 
 #include <sys/types.h>
 #include <sys/socket.h>
